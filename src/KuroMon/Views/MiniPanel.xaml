@@ -1,0 +1,78 @@
+<Window x:Class="KuroMon.Views.MiniPanel"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:KuroMon.ViewModels"
+        xmlns:controls="clr-namespace:KuroMon.Controls"
+        Title="KuroMon" Width="340" SizeToContent="Height"
+        WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" ShowActivated="True"
+        FontFamily="{StaticResource Font.App}"
+        Foreground="{DynamicResource Brush.TextPrimary}"
+        TextOptions.TextFormattingMode="Display">
+
+  <!-- Front layer: acrylic backdrop (lighter, less blurred than the main window's Mica), rounded by DWM -->
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="-1" CornerRadius="0" UseAeroCaptionButtons="False" />
+  </WindowChrome.WindowChrome>
+
+  <Grid>
+    <Border Background="{DynamicResource Brush.PopupTint}" />
+    <StackPanel Margin="16,14,16,10">
+      <DockPanel Margin="0,0,0,8">
+        <TextBlock DockPanel.Dock="Left" Text="&#xE9D9;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Accent}" />
+        <TextBlock DockPanel.Dock="Right" Text="{Binding LastUpdatedText}" VerticalAlignment="Center" Style="{StaticResource Text.Label}" FontSize="11" />
+        <TextBlock Margin="10,0" Text="KuroMon" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" />
+      </DockPanel>
+
+      <ItemsControl ItemsSource="{Binding Devices}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="{x:Type vm:DeviceViewModel}">
+            <controls:GlassCard Margin="0,3" Padding="12,8" CornerRadius="8">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="0" />
+                  <ColumnDefinition Width="48" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="64" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" TextElement.FontFamily="{StaticResource Font.Display}"
+                            TextElement.Foreground="{Binding Usage.Level, Converter={StaticResource LevelToBrush}, ConverterParameter=text}">
+                  <TextBlock Text="{Binding Usage.ShortText}" FontSize="22" FontWeight="SemiBold" />
+                  <TextBlock Text="%" FontSize="12" Margin="1,0,0,4" VerticalAlignment="Bottom" />
+                </StackPanel>
+                <StackPanel Grid.Column="3" Margin="0,0,10,0" Orientation="Horizontal" VerticalAlignment="Center"
+                            TextElement.FontFamily="{StaticResource Font.Display}"
+                            TextElement.Foreground="{Binding Temperature.Level, Converter={StaticResource LevelToBrush}, ConverterParameter=text}"
+                            Visibility="{Binding Temperature.IsAvailable, Converter={StaticResource BoolToVisibility}}">
+                  <TextBlock Text="{Binding Temperature.ShortText}" FontSize="16" FontWeight="SemiBold" />
+                  <TextBlock Text="°C" FontSize="11" Margin="1,0,0,2" VerticalAlignment="Bottom" />
+                </StackPanel>
+                <controls:Sparkline Grid.Column="4" Height="26"
+                                    Values="{Binding Usage.History}" Maximum="100"
+                                    Stroke="{DynamicResource Brush.Accent}" FillOpacity="0.10" StrokeThickness="1.5"
+                                    GridBrush="Transparent" />
+              </Grid>
+            </controls:GlassCard>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <DockPanel Margin="0,8,0,0">
+        <Button DockPanel.Dock="Left" Style="{StaticResource Button.Subtle}" Command="{Binding OptimizeMemoryCommand}"
+                ToolTip="バックグラウンドのメモリを解放">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE945;" Style="{StaticResource Icon}" FontSize="13" />
+            <TextBlock Margin="8,0,0,0" Text="メモリ解放" />
+          </StackPanel>
+        </Button>
+        <Button HorizontalAlignment="Right" Style="{StaticResource Button.Subtle}" Click="OnOpenMainClick">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE8A7;" Style="{StaticResource Icon}" FontSize="13" />
+            <TextBlock Margin="8,0,0,0" Text="詳細を開く" />
+          </StackPanel>
+        </Button>
+      </DockPanel>
+    </StackPanel>
+  </Grid>
+</Window>

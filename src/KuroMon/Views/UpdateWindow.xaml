@@ -1,0 +1,49 @@
+<Window x:Class="KuroMon.Views.UpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="KuroMon - アップデート"
+        Icon="pack://application:,,,/Assets/KuroMon.ico"
+        Width="480" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        FontFamily="{StaticResource Font.App}"
+        Foreground="{DynamicResource Brush.TextPrimary}"
+        TextOptions.TextFormattingMode="Display">
+
+  <!-- Dialog in front of the main window: acrylic backdrop -->
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="40" ResizeBorderThickness="0" GlassFrameThickness="-1" CornerRadius="0" UseAeroCaptionButtons="False" />
+  </WindowChrome.WindowChrome>
+
+  <Grid>
+    <Border Background="{DynamicResource Brush.PopupTint}" />
+    <StackPanel>
+      <DockPanel Height="40">
+        <Button DockPanel.Dock="Right" Style="{StaticResource Button.CaptionClose}" Content="&#xE8BB;" ToolTip="閉じる"
+                IsCancel="True" Click="OnSkipClick" WindowChrome.IsHitTestVisibleInChrome="True" />
+        <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="KuroMon - アップデート" Style="{StaticResource Text.Label}" />
+      </DockPanel>
+
+      <StackPanel Margin="24,4,24,22">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="&#xE895;" Style="{StaticResource Icon}" FontSize="22" Foreground="{DynamicResource Brush.Accent}" />
+          <TextBlock Margin="12,0,0,0" Text="新しいバージョンがあります" VerticalAlignment="Center" Style="{StaticResource Text.Title}" FontSize="20" />
+        </StackPanel>
+
+        <TextBlock x:Name="VersionText" Margin="0,14,0,0" Style="{StaticResource Text.Body}" FontSize="15" />
+
+        <TextBlock Margin="0,14,0,6" Text="更新内容" Style="{StaticResource Text.Label}" />
+        <TextBox x:Name="NotesText" MaxHeight="220" IsReadOnly="True" TextWrapping="Wrap" Background="{DynamicResource Brush.ControlFill}"
+                 VerticalScrollBarVisibility="Auto" Padding="10,8" />
+
+        <ProgressBar x:Name="Progress" Margin="0,16,0,0" Minimum="0" Maximum="100" Visibility="Collapsed" />
+        <TextBlock x:Name="StatusText" Margin="0,6,0,0" Visibility="Collapsed" Style="{StaticResource Text.Caption}" />
+
+        <StackPanel Margin="0,20,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+          <Button x:Name="SkipButton" Content="しない" Click="OnSkipClick" MinWidth="96" />
+          <Button x:Name="UpdateButton" Margin="8,0,0,0" Content="アップデートする" Style="{StaticResource Button.Accent}"
+                  Click="OnUpdateClick" IsDefault="True" MinWidth="120" />
+        </StackPanel>
+      </StackPanel>
+    </StackPanel>
+  </Grid>
+</Window>

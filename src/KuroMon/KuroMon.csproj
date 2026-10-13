@@ -1,0 +1,85 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- WinForms is used only for the notification area icon (NotifyIcon) -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- DPI awareness is declared in app.manifest for WPF; the WinForms analyzer hint does not apply -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+
+    <!-- App identity (Semantic Versioning: MAJOR.MINOR.PATCH) -->
+    <AssemblyName>KuroMon</AssemblyName>
+    <RootNamespace>KuroMon</RootNamespace>
+    <Product>KuroMon</Product>
+    <AssemblyTitle>KuroMon</AssemblyTitle>
+    <Version>1.0.0</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+    <!-- Always request administrator rights (UAC) -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\KuroMon.ico</ApplicationIcon>
+
+    <!-- LibreHardwareMonitorLib ships RID-specific binaries -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PlatformTarget>x64</PlatformTarget>
+
+    <!-- Single self-contained .exe on publish -->
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- packages.lock.json pins transitive packages too (committed) -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <!-- Avoid WPF / WinForms type name clashes (Application, MessageBox, Brush...) -->
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\KuroMon.ico" />
+  </ItemGroup>
+
+  <!--
+    PawnIO driver installer (CPU temperature). Pinned version, downloaded into bin\ at the
+    project root on first build and verified by SHA256. It is embedded into KuroMon.exe
+    (in-app install for the portable version) and bundled by installer\KuroMon.iss.
+    Keep PawnIoVersion / PawnIoSha256 in sync with Services\PawnIoService.cs.
+  -->
+  <PropertyGroup>
+    <PawnIoVersion>2.2.0</PawnIoVersion>
+    <PawnIoSha256>1F519A22E47187F70A1379A48CA604981C4FCF694F4E65B734AAA74A9FBA3032</PawnIoSha256>
+    <PawnIoDir>$(MSBuildThisFileDirectory)..\..\bin\</PawnIoDir>
+    <PawnIoSetup>$(PawnIoDir)PawnIO_setup.exe</PawnIoSetup>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(PawnIoSetup)" LogicalName="KuroMon.PawnIO_setup.exe" Link="Assets\PawnIO_setup.exe" />
+  </ItemGroup>
+
+  <Target Name="FetchPawnIo" BeforeTargets="PrepareForBuild">
+    <DownloadFile Condition="!Exists('$(PawnIoSetup)')"
+                  SourceUrl="https://github.com/namazso/PawnIO.Setup/releases/download/$(PawnIoVersion)/PawnIO_setup.exe"
+                  DestinationFolder="$(PawnIoDir)" DestinationFileName="PawnIO_setup.exe" Retries="2" />
+    <VerifyFileHash File="$(PawnIoSetup)" Algorithm="SHA256" Hash="$(PawnIoSha256)" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+    <PackageReference Include="System.Management" Version="10.0.2" />
+  </ItemGroup>
+
+</Project>

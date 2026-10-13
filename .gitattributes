@@ -1,0 +1,46 @@
+# F:\tool common rule 1: CRLF by default, fixed by .gitattributes
+* text=auto eol=crlf
+
+# Must be CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+*.vbs  text eol=crlf
+*.iss  text eol=crlf
+
+# Source / text
+*.py   text eol=crlf
+*.js   text eol=crlf
+*.ts   text eol=crlf
+*.tsx  text eol=crlf
+*.json text eol=crlf
+*.html text eol=crlf
+*.css  text eol=crlf
+*.md   text eol=crlf
+*.txt  text eol=crlf
+*.cs   text eol=crlf
+*.xaml text eol=crlf
+*.csproj text eol=crlf
+*.sln  text eol=crlf
+*.rs   text eol=crlf
+*.toml text eol=crlf
+*.spec text eol=crlf
+*.env.example text eol=crlf
+
+# Shell scripts (if any) must stay LF
+*.sh   text eol=lf
+
+# Binary
+*.exe  binary
+*.dll  binary
+*.ico  binary
+*.png  binary
+*.jpg  binary
+*.gif  binary
+*.zip  binary
+*.7z   binary
+*.woff binary
+*.woff2 binary
+*.sys  binary
+*.db   binary
+*.sqlite binary

@@ -1,0 +1,23 @@
+KuroMon - Third party software
+==============================
+
+PawnIO 2.2.0
+  The unmodified official installer (PawnIO_setup.exe) is bundled with KuroMon
+  and embedded in KuroMon.exe to install the PawnIO driver, which is needed to
+  read CPU temperature sensors.
+  License : GNU General Public License v2.0
+  Source  : https://github.com/namazso/PawnIO
+  Releases: https://github.com/namazso/PawnIO.Setup/releases/tag/2.2.0
+  Website : https://pawnio.eu/
+
+LibreHardwareMonitorLib 0.9.6
+  License : Mozilla Public License 2.0
+  Source  : https://github.com/LibreHardwareMonitor/LibreHardwareMonitor
+
+CommunityToolkit.Mvvm 8.4.2
+  License : MIT
+  Source  : https://github.com/CommunityToolkit/dotnet
+
+System.Management 10.0.2 / .NET 8 Runtime (included in KuroMon.exe)
+  License : MIT
+  Source  : https://github.com/dotnet/runtime
