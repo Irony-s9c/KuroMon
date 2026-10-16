@@ -4,7 +4,7 @@
                     xmlns:themes="clr-namespace:KuroMon.Themes">
 
   <!--
-    Liquid design control styles. Colors come from ThemeManager (DynamicResource "Brush.*"),
+    Control styles in the Fluent look (WinUI corner radii, card fill and stroke). Colors come from ThemeManager (DynamicResource "Brush.*"),
     motion from themes:Motion (zero when Windows animations are off).
   -->
 
@@ -59,20 +59,20 @@
     <Setter Property="Control.Template">
       <Setter.Value>
         <ControlTemplate>
-          <Border Margin="-2" CornerRadius="10" BorderThickness="2" BorderBrush="{DynamicResource Brush.Accent}" />
+          <Border Margin="-2" CornerRadius="6" BorderThickness="2" BorderBrush="{DynamicResource Brush.Accent}" />
         </ControlTemplate>
       </Setter.Value>
     </Setter>
   </Style>
 
-  <!-- ============================================================ Glass card -->
-  <Style TargetType="controls:GlassCard">
+  <!-- ============================================================ Card -->
+  <Style TargetType="controls:Card">
     <Setter Property="Background" Value="{DynamicResource Brush.CardTint}" />
     <Setter Property="Padding" Value="20,16" />
     <Setter Property="Focusable" Value="False" />
     <Setter Property="Template">
       <Setter.Value>
-        <ControlTemplate TargetType="controls:GlassCard">
+        <ControlTemplate TargetType="controls:Card">
           <Grid>
             <Border CornerRadius="{TemplateBinding CornerRadius}" Background="{TemplateBinding Background}"
                     BorderBrush="{DynamicResource Brush.Edge}" BorderThickness="1" />
@@ -103,7 +103,7 @@
       <Setter.Value>
         <ControlTemplate TargetType="Button">
           <Grid>
-            <Border x:Name="Bg" CornerRadius="8" Background="{TemplateBinding Background}"
+            <Border x:Name="Bg" CornerRadius="4" Background="{TemplateBinding Background}"
                     BorderBrush="{DynamicResource Brush.Edge}" BorderThickness="1" />
             <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
@@ -132,8 +132,7 @@
       <Setter.Value>
         <ControlTemplate TargetType="Button">
           <Grid>
-            <Border x:Name="Bg" CornerRadius="8" Background="{DynamicResource Brush.Accent}" />
-            <Border CornerRadius="8" BorderBrush="{DynamicResource Brush.AccentEdge}" BorderThickness="1" />
+            <Border x:Name="Bg" CornerRadius="4" Background="{DynamicResource Brush.Accent}" />
             <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
           </Grid>
@@ -161,7 +160,7 @@
       <Setter.Value>
         <ControlTemplate TargetType="Button">
           <Grid>
-            <Border x:Name="Bg" CornerRadius="8" Background="Transparent" />
+            <Border x:Name="Bg" CornerRadius="4" Background="Transparent" />
             <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
           </Grid>
@@ -304,9 +303,9 @@
       <Setter.Value>
         <ControlTemplate TargetType="TextBox">
           <Grid>
-            <Border x:Name="Bg" CornerRadius="8" Background="{TemplateBinding Background}"
+            <Border x:Name="Bg" CornerRadius="4" Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" />
-            <Border x:Name="FocusLine" CornerRadius="0,0,8,8" Height="2" VerticalAlignment="Bottom" Margin="1,0"
+            <Border x:Name="FocusLine" CornerRadius="0,0,4,4" Height="2" VerticalAlignment="Bottom" Margin="1,0"
                     Background="{DynamicResource Brush.Accent}" Visibility="Collapsed" />
             <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
             <TextBlock x:Name="Hint" Margin="{TemplateBinding Padding}" Padding="2,0" VerticalAlignment="Center" IsHitTestVisible="False"
@@ -442,7 +441,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="ToolTip">
-          <Border CornerRadius="6" Padding="9,5" Background="{DynamicResource Brush.Menu}" BorderBrush="{DynamicResource Brush.ControlStroke}" BorderThickness="1">
+          <Border CornerRadius="4" Padding="9,5" Background="{DynamicResource Brush.Menu}" BorderBrush="{DynamicResource Brush.ControlStroke}" BorderThickness="1">
             <ContentPresenter />
           </Border>
         </ControlTemplate>
@@ -470,7 +469,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="MenuItem">
-          <Border x:Name="Bg" CornerRadius="6" Padding="12,7" Background="Transparent">
+          <Border x:Name="Bg" CornerRadius="4" Padding="12,7" Background="Transparent">
             <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" />
           </Border>
           <ControlTemplate.Triggers>
@@ -490,7 +489,7 @@
       <Setter.Value>
         <ControlTemplate TargetType="ComboBoxItem">
           <Grid Margin="0,1">
-            <Border x:Name="Bg" CornerRadius="6" Background="Transparent" />
+            <Border x:Name="Bg" CornerRadius="4" Background="Transparent" />
             <Border x:Name="Bar" Width="3" Height="14" CornerRadius="1.5" HorizontalAlignment="Left" Background="{DynamicResource Brush.Accent}" Visibility="Collapsed" />
             <ContentPresenter Margin="12,7" />
           </Grid>
@@ -522,7 +521,7 @@
                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
               <ToggleButton.Template>
                 <ControlTemplate TargetType="ToggleButton">
-                  <Border x:Name="Bg" CornerRadius="8" Background="{DynamicResource Brush.ControlFill}"
+                  <Border x:Name="Bg" CornerRadius="4" Background="{DynamicResource Brush.ControlFill}"
                           BorderBrush="{DynamicResource Brush.Edge}" BorderThickness="1">
                     <TextBlock Margin="0,0,12,0" HorizontalAlignment="Right" Style="{StaticResource Icon}" FontSize="10"
                                Text="&#xE70D;" Foreground="{DynamicResource Brush.TextSecondary}" />
@@ -603,71 +602,60 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
   </Style>
 
-  <!-- ============================================================ Pill selector -->
-  <Style x:Key="PillItem" TargetType="ListBoxItem">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
-    <Setter Property="Cursor" Value="Hand" />
+  <!-- ============================================================ Navigation list -->
+  <Style x:Key="NavItem" TargetType="ListBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
     <Setter Property="FocusVisualStyle" Value="{StaticResource Focus.Ring}" />
     <Setter Property="Padding" Value="12,9" />
+    <Setter Property="Margin" Value="0,1" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="ListBoxItem">
-          <Border Background="Transparent" Padding="{TemplateBinding Padding}">
-            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
-          </Border>
+          <Grid>
+            <Border x:Name="Bg" CornerRadius="4" Background="Transparent" />
+            <Border x:Name="Bar" CornerRadius="1.5" Background="{DynamicResource Brush.Accent}" Visibility="Collapsed" />
+            <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center"
+                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+          </Grid>
           <ControlTemplate.Triggers>
-            <Trigger Property="IsSelected" Value="True">
-              <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-              <Setter Property="FontWeight" Value="SemiBold" />
-            </Trigger>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+              <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Brush.HoverPlate}" />
             </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Brush.SelectionPlate}" />
+              <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <DataTrigger Binding="{Binding Indicator, RelativeSource={RelativeSource AncestorType=controls:NavList}}" Value="Left">
+              <Setter TargetName="Bar" Property="Width" Value="3" />
+              <Setter TargetName="Bar" Property="Height" Value="16" />
+              <Setter TargetName="Bar" Property="HorizontalAlignment" Value="Left" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Indicator, RelativeSource={RelativeSource AncestorType=controls:NavList}}" Value="Bottom">
+              <Setter TargetName="Bar" Property="Width" Value="16" />
+              <Setter TargetName="Bar" Property="Height" Value="3" />
+              <Setter TargetName="Bar" Property="VerticalAlignment" Value="Bottom" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Indicator, RelativeSource={RelativeSource AncestorType=controls:NavList}}" Value="None">
+              <Setter TargetName="Bar" Property="Width" Value="0" />
+            </DataTrigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>
     </Setter>
   </Style>
 
-  <Style TargetType="controls:PillSelector">
+  <Style TargetType="controls:NavList">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="FontFamily" Value="{StaticResource Font.App}" />
     <Setter Property="FontSize" Value="14" />
-    <Setter Property="ItemContainerStyle" Value="{StaticResource PillItem}" />
+    <Setter Property="ItemContainerStyle" Value="{StaticResource NavItem}" />
     <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
     <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Cycle" />
     <Setter Property="Template">
       <Setter.Value>
-        <ControlTemplate TargetType="controls:PillSelector">
-          <Grid>
-            <Canvas x:Name="PART_Canvas" IsHitTestVisible="False">
-              <Border x:Name="PART_Hover" CornerRadius="{TemplateBinding PlateCornerRadius}" Background="{DynamicResource Brush.HoverPlate}" />
-              <Grid x:Name="PART_Selection" Visibility="Collapsed">
-                <Border CornerRadius="{TemplateBinding PlateCornerRadius}" Background="{DynamicResource Brush.SelectionPlate}"
-                        BorderBrush="{DynamicResource Brush.Edge}" BorderThickness="1" />
-                <Border Margin="1" CornerRadius="{TemplateBinding PlateCornerRadius}" Background="{DynamicResource Brush.Gloss}" />
-                <Border x:Name="Bar" CornerRadius="1.5" Background="{DynamicResource Brush.Accent}" Visibility="Collapsed" />
-              </Grid>
-            </Canvas>
-            <ItemsPresenter />
-          </Grid>
-          <ControlTemplate.Triggers>
-            <Trigger Property="Indicator" Value="Left">
-              <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
-              <Setter TargetName="Bar" Property="Width" Value="3" />
-              <Setter TargetName="Bar" Property="Height" Value="16" />
-              <Setter TargetName="Bar" Property="HorizontalAlignment" Value="Left" />
-              <Setter TargetName="Bar" Property="Margin" Value="1,0,0,0" />
-            </Trigger>
-            <Trigger Property="Indicator" Value="Bottom">
-              <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
-              <Setter TargetName="Bar" Property="Width" Value="16" />
-              <Setter TargetName="Bar" Property="Height" Value="3" />
-              <Setter TargetName="Bar" Property="VerticalAlignment" Value="Bottom" />
-              <Setter TargetName="Bar" Property="Margin" Value="0,0,0,1" />
-            </Trigger>
-          </ControlTemplate.Triggers>
+        <ControlTemplate TargetType="controls:NavList">
+          <ItemsPresenter />
         </ControlTemplate>
       </Setter.Value>
     </Setter>

@@ -44,7 +44,7 @@
 
     <!-- Dashboard panel: one device -->
     <DataTemplate x:Key="DevicePanelTemplate" DataType="{x:Type vm:DeviceViewModel}">
-      <controls:GlassCard Margin="5" Padding="18,14,18,14">
+      <controls:Card Margin="5" Padding="18,14,18,14">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -113,12 +113,12 @@
                      Style="{StaticResource Text.Label}" FontSize="12.5"
                      Visibility="{Binding Detail, Converter={StaticResource NullToCollapsed}}" />
         </Grid>
-      </controls:GlassCard>
+      </controls:Card>
     </DataTemplate>
 
     <!-- Detail section (label / value table) -->
     <DataTemplate x:Key="SectionTemplate" DataType="{x:Type models:InfoSection}">
-      <controls:GlassCard Margin="0,0,0,12">
+      <controls:Card Margin="0,0,0,12">
         <StackPanel>
           <TextBlock Margin="0,0,0,8" Text="{Binding Title}" TextWrapping="Wrap" Style="{StaticResource Text.Subtitle}" />
           <ItemsControl ItemsSource="{Binding Items}">
@@ -136,7 +136,7 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-      </controls:GlassCard>
+      </controls:Card>
     </DataTemplate>
 
     <!-- Settings row: text on the left, control on the right -->
@@ -193,7 +193,7 @@
           </DockPanel>
         </StackPanel>
 
-        <controls:PillSelector x:Name="Nav" Indicator="Left" SelectedIndex="0" PlateCornerRadius="8">
+        <controls:NavList x:Name="Nav" Indicator="Left" SelectedIndex="0">
           <ListBoxItem>
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="&#xEC4A;" Style="{StaticResource Icon}" />
@@ -218,7 +218,7 @@
               <TextBlock Margin="12,0,0,0" Text="設定" />
             </StackPanel>
           </ListBoxItem>
-        </controls:PillSelector>
+        </controls:NavList>
       </DockPanel>
     </Border>
 
@@ -238,16 +238,16 @@
       </StackPanel>
 
       <!-- Notice banner -->
-      <controls:GlassCard Grid.Row="1" Margin="0,0,14,10" Padding="16,10" CornerRadius="12">
-        <controls:GlassCard.Style>
-          <Style TargetType="controls:GlassCard" BasedOn="{StaticResource {x:Type controls:GlassCard}}">
+      <controls:Card Grid.Row="1" Margin="0,0,14,10" Padding="16,10">
+        <controls:Card.Style>
+          <Style TargetType="controls:Card" BasedOn="{StaticResource {x:Type controls:Card}}">
             <Style.Triggers>
               <DataTrigger Binding="{Binding Notice}" Value="{x:Null}">
                 <Setter Property="Visibility" Value="Collapsed" />
               </DataTrigger>
             </Style.Triggers>
           </Style>
-        </controls:GlassCard.Style>
+        </controls:Card.Style>
         <DockPanel>
           <TextBlock DockPanel.Dock="Left" Text="&#xE946;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Accent}" />
           <Button DockPanel.Dock="Right" Style="{StaticResource Button.Icon}" Width="30" Height="30" FontSize="11" Content="&#xE711;"
@@ -261,11 +261,11 @@
           </Button>
           <TextBlock Margin="12,0" VerticalAlignment="Center" Text="{Binding Notice}" Style="{StaticResource Text.Body}" />
         </DockPanel>
-      </controls:GlassCard>
+      </controls:Card>
 
-      <!-- Content surface: a lighter glass layer in front of the sidebar -->
+      <!-- Content surface in front of the sidebar -->
       <Grid Grid.Row="2" Margin="0,0,14,14">
-        <Border CornerRadius="12" Background="{DynamicResource Brush.SurfaceTint}" BorderBrush="{DynamicResource Brush.Edge}" BorderThickness="1" />
+        <Border CornerRadius="8" Background="{DynamicResource Brush.SurfaceTint}" BorderBrush="{DynamicResource Brush.Edge}" BorderThickness="1" />
 
         <Grid x:Name="Pages" Margin="18,18,8,14">
           <Grid.RowDefinitions>
@@ -307,7 +307,7 @@
             <StackPanel Margin="0,0,10,0">
               <TextBlock Text="メモリ最適化" Style="{StaticResource PageTitle}" />
 
-              <controls:GlassCard Margin="0,0,0,12">
+              <controls:Card Margin="0,0,0,12">
                 <Grid>
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -339,18 +339,18 @@
                                  Visibility="{Binding IsOptimizing, Converter={StaticResource BoolToVisibility}}" />
                   </StackPanel>
                 </Grid>
-              </controls:GlassCard>
+              </controls:Card>
 
-              <controls:GlassCard Margin="0,0,0,12">
+              <controls:Card Margin="0,0,0,12">
                 <StackPanel>
                   <TextBlock Text="前回の結果" Style="{StaticResource Text.Section}" />
                   <TextBlock Text="{Binding LastOptimizeText}" Style="{StaticResource Text.Body}" FontSize="15" />
                   <TextBlock Margin="0,4,0,0" Text="{Binding LastOptimizeDetail}" Style="{StaticResource Text.Caption}"
                              Visibility="{Binding LastOptimizeDetail, Converter={StaticResource NullToCollapsed}}" />
                 </StackPanel>
-              </controls:GlassCard>
+              </controls:Card>
 
-              <controls:GlassCard Margin="0,0,0,12">
+              <controls:Card Margin="0,0,0,12">
                 <StackPanel>
                   <TextBlock Text="ゲーム中の自動最適化" Style="{StaticResource Text.Section}" />
                   <DockPanel Style="{StaticResource SettingRow}">
@@ -375,9 +375,9 @@
                     <TextBlock Margin="10,0,0,0" Text="{Binding GameStatusText}" Style="{StaticResource Text.Body}" />
                   </StackPanel>
                 </StackPanel>
-              </controls:GlassCard>
+              </controls:Card>
 
-              <controls:GlassCard>
+              <controls:Card>
                 <StackPanel>
                   <TextBlock Text="解放の方法" Style="{StaticResource Text.Section}" />
                   <TextBlock Style="{StaticResource Text.Caption}" FontSize="13"
@@ -399,7 +399,7 @@
                   <TextBlock Margin="0,10,0,0" Style="{StaticResource Text.Caption}"
                              Text="短い間隔で何度も実行すると、縮小したページを読み戻すために逆に動作が重くなることがあります。自動モードは 3 分以上の間隔を空けて実行します。" />
                 </StackPanel>
-              </controls:GlassCard>
+              </controls:Card>
             </StackPanel>
           </ScrollViewer>
 
@@ -415,19 +415,19 @@
               </Button>
               <TextBlock Text="ハードウェア" Style="{StaticResource PageTitle}" Margin="4,0,0,0" />
             </DockPanel>
-            <controls:PillSelector x:Name="HardwareTabs" DockPanel.Dock="Top" Indicator="Bottom" SelectedIndex="0" HorizontalAlignment="Left"
-                                   Margin="0,0,0,12" PlateCornerRadius="8">
-              <controls:PillSelector.ItemsPanel>
+            <controls:NavList x:Name="HardwareTabs" DockPanel.Dock="Top" Indicator="Bottom" SelectedIndex="0" HorizontalAlignment="Left"
+                                   Margin="0,0,0,12">
+              <controls:NavList.ItemsPanel>
                 <ItemsPanelTemplate>
                   <StackPanel Orientation="Horizontal" />
                 </ItemsPanelTemplate>
-              </controls:PillSelector.ItemsPanel>
+              </controls:NavList.ItemsPanel>
               <ListBoxItem Padding="16,8">CPU</ListBoxItem>
               <ListBoxItem Padding="16,8">GPU</ListBoxItem>
               <ListBoxItem Padding="16,8">ディスプレイ</ListBoxItem>
               <ListBoxItem Padding="16,8">メモリ</ListBoxItem>
               <ListBoxItem Padding="16,8">マザーボード</ListBoxItem>
-            </controls:PillSelector>
+            </controls:NavList>
             <ProgressBar DockPanel.Dock="Top" Height="3" IsIndeterminate="True" Margin="0,0,0,12"
                          Visibility="{Binding IsLoadingDetails, Converter={StaticResource BoolToVisibility}}" />
             <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -440,7 +440,7 @@
                               Visibility="{Binding SelectedIndex, ElementName=HardwareTabs, Converter={StaticResource IndexToVisibility}, ConverterParameter=2}" />
                 <StackPanel Visibility="{Binding SelectedIndex, ElementName=HardwareTabs, Converter={StaticResource IndexToVisibility}, ConverterParameter=3}">
                   <ItemsControl ItemsSource="{Binding MemorySections}" ItemTemplate="{StaticResource SectionTemplate}" />
-                  <controls:GlassCard>
+                  <controls:Card>
                     <StackPanel>
                       <TextBlock Margin="0,0,0,8" Text="モジュール一覧" Style="{StaticResource Text.Subtitle}" />
                       <DataGrid ItemsSource="{Binding MemoryModules}" AutoGenerateColumns="False" IsReadOnly="True"
@@ -456,7 +456,7 @@
                         </DataGrid.Columns>
                       </DataGrid>
                     </StackPanel>
-                  </controls:GlassCard>
+                  </controls:Card>
                 </StackPanel>
                 <ItemsControl ItemsSource="{Binding MotherboardSections}" ItemTemplate="{StaticResource SectionTemplate}"
                               Visibility="{Binding SelectedIndex, ElementName=HardwareTabs, Converter={StaticResource IndexToVisibility}, ConverterParameter=4}" />
@@ -469,7 +469,7 @@
             <StackPanel Margin="0,0,10,0">
               <TextBlock Text="設定" Style="{StaticResource PageTitle}" />
 
-              <controls:GlassCard Margin="0,0,0,12">
+              <controls:Card Margin="0,0,0,12">
                 <StackPanel>
                   <TextBlock Text="一般" Style="{StaticResource Text.Section}" />
                   <DockPanel Style="{StaticResource SettingRow}">
@@ -484,13 +484,13 @@
                                   IsChecked="{Binding IsDarkTheme, Mode=OneWay}" Command="{Binding ToggleThemeCommand}" />
                     <StackPanel Margin="0,0,16,0">
                       <TextBlock Text="ダークテーマ" Style="{StaticResource Text.Body}" />
-                      <TextBlock Text="Windows の「透明効果」がオフのときは、ガラスの代わりに不透明な面で表示します。" Style="{StaticResource Text.Caption}" />
+                      <TextBlock Text="Windows の「透明効果」がオフのときは、背景を半透明にせずに表示します。" Style="{StaticResource Text.Caption}" />
                     </StackPanel>
                   </DockPanel>
                 </StackPanel>
-              </controls:GlassCard>
+              </controls:Card>
 
-              <controls:GlassCard Margin="0,0,0,12">
+              <controls:Card Margin="0,0,0,12">
                 <StackPanel>
                   <TextBlock Text="オーバーレイ" Style="{StaticResource Text.Section}" />
                   <DockPanel Style="{StaticResource SettingRow}">
@@ -509,9 +509,9 @@
                     </StackPanel>
                   </DockPanel>
                 </StackPanel>
-              </controls:GlassCard>
+              </controls:Card>
 
-              <controls:GlassCard Margin="0,0,0,12">
+              <controls:Card Margin="0,0,0,12">
                 <StackPanel>
                   <TextBlock Text="通知領域" Style="{StaticResource Text.Section}" />
                   <DockPanel Style="{StaticResource SettingRow}">
@@ -530,9 +530,9 @@
                     </StackPanel>
                   </DockPanel>
                 </StackPanel>
-              </controls:GlassCard>
+              </controls:Card>
 
-              <controls:GlassCard Margin="0,0,0,12">
+              <controls:Card Margin="0,0,0,12">
                 <StackPanel>
                   <TextBlock Text="アップデート" Style="{StaticResource Text.Section}" />
                   <Grid>
@@ -588,9 +588,9 @@
                     </StackPanel>
                   </Button>
                 </StackPanel>
-              </controls:GlassCard>
+              </controls:Card>
 
-              <controls:GlassCard>
+              <controls:Card>
                 <StackPanel>
                   <TextBlock Text="情報" Style="{StaticResource Text.Section}" />
                   <Grid>
@@ -631,7 +631,7 @@
                     </Button>
                   </StackPanel>
                 </StackPanel>
-              </controls:GlassCard>
+              </controls:Card>
             </StackPanel>
           </ScrollViewer>
 
@@ -644,7 +644,7 @@
         </Grid>
 
         <!-- Toast: a small light glass plate in front of everything -->
-        <Border HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,44" Padding="16,10" CornerRadius="10"
+        <Border HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,44" Padding="16,10" CornerRadius="8"
                 Background="{DynamicResource Brush.Menu}" BorderBrush="{DynamicResource Brush.Edge}" BorderThickness="1"
                 Visibility="{Binding Snackbar.IsOpen, Converter={StaticResource BoolToVisibility}}" IsHitTestVisible="False">
           <TextBlock Text="{Binding Snackbar.Message}" Style="{StaticResource Text.Body}" />

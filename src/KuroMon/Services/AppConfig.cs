@@ -26,10 +26,10 @@ public static class AppConfig
 
     public static string CurrentVersionText => $"v{CurrentVersion.Major}.{CurrentVersion.Minor}.{CurrentVersion.Build}";
 
-    /// <summary>Public release-only repository (no source code), used when KUROMON_UPDATE_REPO is not set.</summary>
+    /// <summary>Repository checked for updates when KUROMON_UPDATE_REPO is not set.</summary>
     public const string DefaultUpdateRepository = "Irony-s9c/KuroMon";
 
-    /// <summary>Release repository in "owner/repo" form (.env / environment variable, else the default).</summary>
+    /// <summary>Repository in "owner/repo" form (.env / environment variable, else the default).</summary>
     public static string UpdateRepository => Get(UpdateRepoKey) ?? DefaultUpdateRepository;
 
     /// <summary>Optional GitHub token (only needed for a private release repository).</summary>

@@ -6,7 +6,7 @@
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
-        <!-- Liquid design: control styles. Colors (Brush.*) are added by Themes\ThemeManager at startup. -->
+        <!-- Control styles. Colors (Brush.*) are added by Themes\ThemeManager at startup. -->
         <ResourceDictionary Source="Themes/Controls.xaml" />
       </ResourceDictionary.MergedDictionaries>
 

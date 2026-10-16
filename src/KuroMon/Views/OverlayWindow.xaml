@@ -10,7 +10,7 @@
     Deliberately theme-independent: a dark translucent bar stays readable over any game.
     Values use the status colors; labels are white.
   -->
-  <Border x:Name="Root" CornerRadius="12" Padding="12,6" BorderThickness="1"
+  <Border x:Name="Root" CornerRadius="8" Padding="12,6" BorderThickness="1"
           MouseLeftButtonDown="OnDragStart" ToolTip="ドラッグで移動 / 右クリックでメニュー">
     <!-- Dark glass: slight gloss at the top, thin light edge fading downwards -->
     <Border.Background>

@@ -380,8 +380,8 @@ public partial class App : Application
         {
             try
             {
-                UpdateService.ApplyAndRestart(path);
-                AppLog.Info($"Update applied: {info.TagName}. Restarting.");
+                UpdateService.RunInstaller(path);
+                AppLog.Info($"Installer started for {info.TagName}.");
                 ExitApp();
             }
             catch (Exception ex)

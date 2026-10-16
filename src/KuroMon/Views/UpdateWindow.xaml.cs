@@ -11,7 +11,7 @@ public partial class UpdateWindow : Window
     public UpdateWindow(UpdateInfo info)
     {
         InitializeComponent();
-        Themes.WindowGlass.Attach(this, Themes.Backdrop.Acrylic);
+        Themes.WindowBackdrop.Attach(this, Themes.Backdrop.Acrylic);
         _info = info;
         VersionText.Text = $"{AppConfig.CurrentVersionText}  →  {info.TagName}";
         NotesText.Text = string.IsNullOrWhiteSpace(info.ReleaseNotes) ? "(更新内容の記載はありません)" : info.ReleaseNotes;

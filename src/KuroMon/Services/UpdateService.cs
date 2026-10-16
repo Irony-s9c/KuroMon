@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Security.Cryptography;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -7,7 +8,7 @@ using System.Text.Json.Serialization;
 
 namespace KuroMon.Services;
 
-public sealed record UpdateInfo(Version Version, string TagName, string ReleaseNotes, string DownloadUrl, string AssetName, long Size);
+public sealed record UpdateInfo(string Version, string TagName, string ReleaseNotes, string DownloadUrl, string AssetName, long Size, string? Sha256);
 
 public enum UpdateCheckStatus
 {
@@ -32,8 +33,8 @@ public sealed record UpdateCheckResult(UpdateCheckStatus Status, UpdateInfo? Upd
 }
 
 /// <summary>
-/// Checks GitHub Releases for a newer semantic version and swaps the running .exe.
-/// Only the built .exe is published as a release asset; no source code is needed in the repository.
+/// Checks GitHub Releases for a newer semantic version, downloads the installer (KuroMon-Setup-x.y.z.exe),
+/// verifies its SHA-256 and runs it with /SILENT. The installer restarts KuroMon when it finishes.
 /// </summary>
 public sealed class UpdateService : IDisposable
 {
@@ -105,17 +106,17 @@ public sealed class UpdateService : IDisposable
 
             UpdateInfo? update = null;
             if (release is { Draft: false, Prerelease: false }
-                && TryParseSemVer(release.TagName, out var latest)
-                && latest > AppConfig.CurrentVersion)
+                && SemVer.TagToVersion(release.TagName) is { } latest
+                && SemVer.IsNewer(latest, AppConfig.CurrentVersionText.TrimStart('v')))
             {
-                var asset = release.Assets.FirstOrDefault(a => a.Name.Equals("KuroMon.exe", StringComparison.OrdinalIgnoreCase))
-                            ?? release.Assets.FirstOrDefault(a => a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                                                                  && !a.Name.Contains("Setup", StringComparison.OrdinalIgnoreCase));
+                var asset = release.Assets.FirstOrDefault(a => a.Name.StartsWith("KuroMon-Setup-", StringComparison.OrdinalIgnoreCase)
+                                                               && a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
                 if (asset is not null)
                 {
                     // Private repositories need the API asset URL with an octet-stream Accept header.
                     var url = hasToken ? asset.Url : asset.BrowserDownloadUrl;
-                    update = new UpdateInfo(latest, release.TagName, release.Body ?? string.Empty, url, asset.Name, asset.Size);
+                    var sha = asset.Digest is { } d && d.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase) ? d[7..] : null;
+                    update = new UpdateInfo(latest, release.TagName, release.Body ?? string.Empty, url, asset.Name, asset.Size, sha);
                 }
             }
             return new UpdateCheckResult(UpdateCheckStatus.Ok, update, expires, null);
@@ -139,12 +140,12 @@ public sealed class UpdateService : IDisposable
     private static bool IsRateLimited(HttpResponseMessage response) =>
         response.Headers.TryGetValues("X-RateLimit-Remaining", out var v) && v.FirstOrDefault() == "0";
 
-    /// <summary>Downloads the new .exe into %TEMP% and returns its path.</summary>
+    /// <summary>Downloads the installer into %TEMP%, checks its size and SHA-256, and returns its path.</summary>
     public async Task<string> DownloadAsync(UpdateInfo info, IProgress<double>? progress, CancellationToken ct = default)
     {
         var dir = Path.Combine(Path.GetTempPath(), "KuroMon_update");
         Directory.CreateDirectory(dir);
-        var target = Path.Combine(dir, $"KuroMon_{info.TagName}.exe");
+        var target = Path.Combine(dir, info.AssetName);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, info.DownloadUrl);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
@@ -167,54 +168,28 @@ public sealed class UpdateService : IDisposable
             }
         }
 
-        if (new FileInfo(target).Length == 0) throw new IOException("Downloaded file is empty.");
+        var length = new FileInfo(target).Length;
+        if (length == 0 || (info.Size > 0 && length != info.Size)) throw new IOException("ダウンロードしたファイルのサイズが一致しません。");
+        if (info.Sha256 is { } expected)
+        {
+            await using var fs = File.OpenRead(target);
+            var actual = Convert.ToHexString(await SHA256.HashDataAsync(fs, ct).ConfigureAwait(false));
+            if (!actual.Equals(expected, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new IOException("ダウンロードしたファイルが壊れているか、改ざんされています。");
+            }
+        }
         return target;
     }
 
-    /// <summary>
-    /// Replaces the running .exe and starts the new one.
-    /// Windows allows renaming a running executable, so the current file is moved into "backup\" first.
-    /// </summary>
-    public static void ApplyAndRestart(string downloadedExe)
+    /// <summary>Starts the installer silently. The caller exits KuroMon right after; the installer restarts it.</summary>
+    public static void RunInstaller(string installer)
     {
-        var current = AppConfig.ExePath;
-        var backupDir = Path.Combine(Path.GetDirectoryName(current)!, "backup");
-        Directory.CreateDirectory(backupDir);
-        var backup = Path.Combine(backupDir, $"KuroMon_{AppConfig.CurrentVersionText}_{DateTime.Now:yyyyMMdd_HHmmss}.exe");
-
-        File.Move(current, backup);
-        try
-        {
-            File.Copy(downloadedExe, current, overwrite: true);
-        }
-        catch
-        {
-            File.Move(backup, current); // roll back
-            throw;
-        }
-
-        Process.Start(new ProcessStartInfo(current, App.AfterUpdateArgument)
+        Process.Start(new ProcessStartInfo(installer, "/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS")
         {
             UseShellExecute = true,
-            WorkingDirectory = Path.GetDirectoryName(current)!,
+            WorkingDirectory = Path.GetDirectoryName(installer)!,
         });
-    }
-
-    public static bool TryParseSemVer(string? tag, out Version version)
-    {
-        version = new Version(0, 0, 0);
-        if (string.IsNullOrWhiteSpace(tag)) return false;
-
-        var s = tag.Trim().TrimStart('v', 'V');
-        var cut = s.IndexOfAny(['-', '+']);
-        if (cut >= 0) s = s[..cut];
-
-        var parts = s.Split('.');
-        if (parts.Length != 3) return false;
-        if (!int.TryParse(parts[0], out var major) || !int.TryParse(parts[1], out var minor) || !int.TryParse(parts[2], out var patch)) return false;
-
-        version = new Version(major, minor, patch);
-        return true;
     }
 
     public void Dispose() => _http.Dispose();
@@ -234,5 +209,6 @@ public sealed class UpdateService : IDisposable
         [JsonPropertyName("url")] public string Url { get; set; } = string.Empty;
         [JsonPropertyName("browser_download_url")] public string BrowserDownloadUrl { get; set; } = string.Empty;
         [JsonPropertyName("size")] public long Size { get; set; }
+        [JsonPropertyName("digest")] public string? Digest { get; set; }
     }
 }

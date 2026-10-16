@@ -4,9 +4,8 @@ using System.Windows.Media;
 namespace KuroMon.Themes;
 
 /// <summary>
-/// Liquid design palette. Neutral glass layers with one accent color:
-/// the further back a layer is (window, sidebar), the darker and more transparent; the closer
-/// (cards, popups, selection), the lighter. Every brush is published as an application resource
+/// Color palette in the Fluent look: neutral layers over Mica plus the Windows accent color.
+/// The window and sidebar show the backdrop; cards, popups and the selection are slightly lighter. Every brush is published as an application resource
 /// and used through DynamicResource, so a theme switch recolors all windows at once.
 /// When Windows "Transparency effects" is off (or the backdrop is unavailable) opaque colors are used instead.
 /// </summary>
@@ -19,7 +18,7 @@ public static class ThemeManager
     public static event Action? Changed;
 
     // (translucent over Mica / acrylic, opaque fallback)
-    private sealed record Tone(Color Glass, Color Solid);
+    private sealed record Tone(Color Translucent, Color Solid);
 
     private static Color C(uint argb) => Color.FromArgb((byte)(argb >> 24), (byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
 
@@ -91,7 +90,7 @@ public static class ThemeManager
 
         foreach (var (key, tone) in dark ? Dark : Light)
         {
-            res[key] = Frozen(new SolidColorBrush(IsTranslucent ? tone.Glass : tone.Solid));
+            res[key] = Frozen(new SolidColorBrush(IsTranslucent ? tone.Translucent : tone.Solid));
         }
 
         // The user's Windows accent color, in the shades Windows 11 apps use for each theme.
@@ -102,20 +101,8 @@ public static class ThemeManager
             res["Brush.OnAccent"] = Frozen(new SolidColorBrush(accent.OnFill));
         }
 
-        // Thin edge line of a glass surface: slightly brighter at the top.
-        res["Brush.Edge"] = Frozen(new LinearGradientBrush(
-            dark ? C(0x1FFFFFFF) : C(0xE6FFFFFF),
-            dark ? C(0x0FFFFFFF) : C(0x14000000),
-            90));
-        // Very faint top sheen (selection plate only).
-        res["Brush.Gloss"] = Frozen(new LinearGradientBrush(
-            [
-                new GradientStop(dark ? C(0x08FFFFFF) : C(0x33FFFFFF), 0),
-                new GradientStop(C(0x00FFFFFF), 0.5),
-            ],
-            90));
-        // Accent edge for the primary button.
-        res["Brush.AccentEdge"] = Frozen(new LinearGradientBrush(C(0x40FFFFFF), C(0x14000000), 90));
+        // Card stroke (WinUI CardStrokeColorDefault).
+        res["Brush.Edge"] = Frozen(new SolidColorBrush(dark ? C(0x19000000) : C(0x0F000000)));
 
         Converters.LevelPalette.ApplyTheme(dark);
         Changed?.Invoke();

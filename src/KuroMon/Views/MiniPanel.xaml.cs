@@ -10,7 +10,7 @@ public partial class MiniPanel : Window
     public MiniPanel()
     {
         InitializeComponent();
-        Themes.WindowGlass.Attach(this, Themes.Backdrop.Acrylic);
+        Themes.WindowBackdrop.Attach(this, Themes.Backdrop.Acrylic);
         Deactivated += (_, _) => HidePanel();
     }
 

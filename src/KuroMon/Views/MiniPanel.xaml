@@ -26,7 +26,7 @@
       <ItemsControl ItemsSource="{Binding Devices}">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type vm:DeviceViewModel}">
-            <controls:GlassCard Margin="0,3" Padding="12,8" CornerRadius="8">
+            <controls:Card Margin="0,3" Padding="12,8">
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="0" />
@@ -53,7 +53,7 @@
                                     Stroke="{DynamicResource Brush.Accent}" FillOpacity="0.10" StrokeThickness="1.5"
                                     GridBrush="Transparent" />
               </Grid>
-            </controls:GlassCard>
+            </controls:Card>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>

@@ -16,7 +16,7 @@ public partial class MainWindow : Window
         DataContext = vm;
         _pages = [PageDashboard, PageMemory, PageHardware, PageSettings];
 
-        WindowGlass.Attach(this, Backdrop.Mica);
+        WindowBackdrop.Attach(this, Backdrop.Mica);
         Nav.SelectionChanged += (_, _) => ShowPage(Nav.SelectedIndex);
         StateChanged += (_, _) =>
         {
