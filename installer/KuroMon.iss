@@ -24,8 +24,8 @@ VersionInfoVersion={#AppVersion}
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
-OutputDir=..\dist
-OutputBaseFilename=KuroMon-Setup-v{#AppVersion}
+OutputDir=..\bin
+OutputBaseFilename=KuroMon-Setup-{#AppVersion}
 SetupIconFile=..\src\KuroMon\Assets\KuroMon.ico
 UninstallDisplayIcon={app}\{#AppExe}
 UninstallDisplayName={#AppName}
@@ -49,11 +49,11 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\dist\KuroMon.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\publish\KuroMon.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\.env.example"; DestDir: "{app}"; Flags: ignoreversion
 Source: "THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 ; PawnIO driver installer (CPU temperature). Downloaded and hash-checked into bin\ by the build.
-Source: "..\bin\PawnIO_setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: PawnIoNeedsInstall
+Source: "..\vendor\PawnIO_setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: PawnIoNeedsInstall
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"

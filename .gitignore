@@ -1,9 +1,29 @@
-# ------------------------------------------------------------
-# Secrets / environment
-# ------------------------------------------------------------
+# ---- common ----
 .env
 .env.*
 !.env.example
+bin/
+build/
+vendor/
+logs/
+backups/
+dist/
+*.log
+CLAUDE.md
+.claude/
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+
+# ---- scripts (local only) ----
+scripts/
+*.bat
+*.cmd
+*.ps1
+*.vbs
+
+# Secrets / environment
 *.pfx
 *.p12
 *.snk
@@ -12,12 +32,8 @@
 secrets.json
 appsettings.*.local.json
 
-# ------------------------------------------------------------
 # Build outputs
-# ------------------------------------------------------------
-bin/
 obj/
-dist/
 publish/
 release/
 out/
@@ -35,37 +51,18 @@ x86/
 # Tools downloaded by the build scripts (Inno Setup)
 tools/
 
-# ------------------------------------------------------------
-# Local scripts (not distributed)
-# ------------------------------------------------------------
-scripts/
-*.bat
-*.cmd
-*.ps1
-
-# ------------------------------------------------------------
 # Local notes, backups, archives, logs
-# ------------------------------------------------------------
 docs/private/
-backups/
 backup/
 legacy_logs_archive.zip
 *.zip
 *.7z
-logs/
-*.log
 
-# ------------------------------------------------------------
 # IDE / OS
-# ------------------------------------------------------------
 .vs/
-.vscode/
-.idea/
 *.user
 *.suo
 *.userprefs
 *.DotSettings.user
 TestResults/
-Thumbs.db
-Desktop.ini
 .DS_Store

@@ -53,7 +53,7 @@
   </ItemGroup>
 
   <!--
-    PawnIO driver installer (CPU temperature). Pinned version, downloaded into bin\ at the
+    PawnIO driver installer (CPU temperature). Pinned version, downloaded into vendor\ at the
     project root on first build and verified by SHA256. It is embedded into KuroMon.exe
     (in-app install for the portable version) and bundled by installer\KuroMon.iss.
     Keep PawnIoVersion / PawnIoSha256 in sync with Services\PawnIoService.cs.
@@ -61,7 +61,7 @@
   <PropertyGroup>
     <PawnIoVersion>2.2.0</PawnIoVersion>
     <PawnIoSha256>1F519A22E47187F70A1379A48CA604981C4FCF694F4E65B734AAA74A9FBA3032</PawnIoSha256>
-    <PawnIoDir>$(MSBuildThisFileDirectory)..\..\bin\</PawnIoDir>
+    <PawnIoDir>$(MSBuildThisFileDirectory)..\..\vendor\</PawnIoDir>
     <PawnIoSetup>$(PawnIoDir)PawnIO_setup.exe</PawnIoSetup>
   </PropertyGroup>
 
