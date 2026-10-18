@@ -12,7 +12,7 @@
         Foreground="{DynamicResource Brush.TextPrimary}"
         TextOptions.TextFormattingMode="Display">
 
-  <!-- Custom title bar over the Mica backdrop (DWM draws the glass behind the whole client area) -->
+  <!-- Custom title bar -->
   <WindowChrome.WindowChrome>
     <WindowChrome CaptionHeight="44" ResizeBorderThickness="6" GlassFrameThickness="-1" CornerRadius="0" UseAeroCaptionButtons="False" />
   </WindowChrome.WindowChrome>

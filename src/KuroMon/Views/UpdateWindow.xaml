@@ -9,7 +9,7 @@
         Foreground="{DynamicResource Brush.TextPrimary}"
         TextOptions.TextFormattingMode="Display">
 
-  <!-- Dialog in front of the main window: acrylic backdrop -->
+  <!-- Dialog in front of the main window -->
   <WindowChrome.WindowChrome>
     <WindowChrome CaptionHeight="40" ResizeBorderThickness="0" GlassFrameThickness="-1" CornerRadius="0" UseAeroCaptionButtons="False" />
   </WindowChrome.WindowChrome>

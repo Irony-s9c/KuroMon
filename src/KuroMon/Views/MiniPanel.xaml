@@ -9,7 +9,7 @@
         Foreground="{DynamicResource Brush.TextPrimary}"
         TextOptions.TextFormattingMode="Display">
 
-  <!-- Front layer: acrylic backdrop (lighter, less blurred than the main window's Mica), rounded by DWM -->
+  <!-- Front layer: opaque, rounded by DWM -->
   <WindowChrome.WindowChrome>
     <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="-1" CornerRadius="0" UseAeroCaptionButtons="False" />
   </WindowChrome.WindowChrome>
