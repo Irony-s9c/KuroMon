@@ -1,73 +1,72 @@
 using System.Diagnostics;
 using System.IO;
-using System.Security.Cryptography;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace KuroMon.Services;
 
-public sealed record UpdateInfo(string Version, string TagName, string ReleaseNotes, string DownloadUrl, string AssetName, long Size, string? Sha256);
+/// <param name="DownloadUrl">Direct download of the installer (https), or empty when the server gives none.</param>
+/// <param name="Sha256">SHA-256 of the installer; the update is installed only when the download matches it.</param>
+/// <param name="PageUrl">Download page, opened in the browser when the update cannot be installed automatically.</param>
+public sealed record UpdateInfo(string Version, string TagName, string ReleaseNotes, string DownloadUrl, string AssetName, string? Sha256, string PageUrl)
+{
+    public bool CanInstall => DownloadUrl.Length > 0 && Sha256 is not null;
+}
 
 public enum UpdateCheckStatus
 {
     /// <summary>Check succeeded (an update may or may not be available).</summary>
     Ok,
-    /// <summary>KUROMON_UPDATE_REPO is not set.</summary>
-    NotConfigured,
-    /// <summary>401: the token is expired, revoked or malformed.</summary>
-    TokenInvalid,
-    /// <summary>403/404 with a token: the token cannot read the repository.</summary>
-    TokenNoAccess,
-    /// <summary>404 without a token: repository missing or private.</summary>
-    TokenMissing,
-    /// <summary>Network error, rate limit or unexpected response.</summary>
+    /// <summary>Network error or unexpected response.</summary>
     Error,
 }
 
-/// <param name="TokenExpires">Expiry reported by GitHub for fine-grained / expiring tokens.</param>
-public sealed record UpdateCheckResult(UpdateCheckStatus Status, UpdateInfo? Update, DateTimeOffset? TokenExpires, string? Message)
-{
-    public bool IsAuthProblem => Status is UpdateCheckStatus.TokenInvalid or UpdateCheckStatus.TokenNoAccess or UpdateCheckStatus.TokenMissing;
-}
+public sealed record UpdateCheckResult(UpdateCheckStatus Status, UpdateInfo? Update, string? Message);
 
 /// <summary>
-/// Checks GitHub Releases for a newer semantic version, downloads the installer (KuroMon-Setup-x.y.z.exe),
-/// verifies its SHA-256 and runs it with /SILENT. The installer restarts KuroMon when it finishes.
+/// Checks the Musubi server for a newer version (GET /api/version/kuromon: latest_version, file_url, sha256,
+/// download_url, release_notes), downloads the installer, verifies its SHA-256 and runs it with /SILENT.
+/// The installer restarts KuroMon when it finishes. Nothing is sent but the GET itself.
 /// </summary>
 public sealed class UpdateService : IDisposable
 {
+    public const string AppId = "kuromon";
+    public const string DefaultServerUrl = "https://musubi-bot.xyz";
+    private const long MaxInstallerBytes = 1024L * 1024 * 1024;
+
     private readonly HttpClient _http;
-    private readonly bool _hasToken;
 
     public UpdateService()
     {
         _http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("KuroMon", AppConfig.CurrentVersionText.TrimStart('v')));
-        _http.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
+    }
 
-        // The token is read when the service is created; a new service is created for every check,
-        // so a renewed token in .env is picked up automatically.
-        var token = AppConfig.GitHubToken;
-        _hasToken = token is not null;
-        if (token is not null)
+    /// <summary>
+    /// The update server decides which installer gets run, so release builds always use the built-in one.
+    /// Debug builds can point at a test server with KUROMON_MUSUBI_URL.
+    /// </summary>
+    public static string ServerUrl
+    {
+        get
         {
-            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+#if DEBUG
+            if (Environment.GetEnvironmentVariable("KUROMON_MUSUBI_URL") is { Length: > 0 } test) return test.TrimEnd('/');
+#endif
+            return DefaultServerUrl;
         }
     }
+
+    public static string DefaultPageUrl => $"{ServerUrl}/apps/{AppId}";
 
     /// <summary>Checks the latest release. <see cref="UpdateCheckResult.Update"/> is set when a newer version exists.</summary>
     public async Task<UpdateCheckResult> CheckAsync(CancellationToken ct = default)
     {
-        var repo = AppConfig.UpdateRepository;
-        if (!repo.Contains('/'))
-        {
-            return new UpdateCheckResult(UpdateCheckStatus.NotConfigured, null, null, null);
-        }
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/repos/{repo}/releases/latest");
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServerUrl}/api/version/{AppId}");
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         HttpResponseMessage response;
         try
@@ -76,110 +75,102 @@ public sealed class UpdateService : IDisposable
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            return new UpdateCheckResult(UpdateCheckStatus.Error, null, null, ex.Message);
+            return new UpdateCheckResult(UpdateCheckStatus.Error, null, ex.Message);
         }
 
         using (response)
         {
-            var expires = ReadTokenExpiry(response);
-            var hasToken = _hasToken;
+            // 404: nothing published yet, which is "up to date", not an error.
+            if ((int)response.StatusCode == 404) return new UpdateCheckResult(UpdateCheckStatus.Ok, null, null);
+            if (!response.IsSuccessStatusCode) return new UpdateCheckResult(UpdateCheckStatus.Error, null, $"HTTP {(int)response.StatusCode}");
 
-            switch ((int)response.StatusCode)
+            VersionResponse? data;
+            try
             {
-                case 401:
-                    return new UpdateCheckResult(UpdateCheckStatus.TokenInvalid, null, expires, "401 Unauthorized");
-                case 403 when IsRateLimited(response):
-                    return new UpdateCheckResult(UpdateCheckStatus.Error, null, expires, "GitHub API rate limit");
-                case 403 or 404 when hasToken:
-                    return new UpdateCheckResult(UpdateCheckStatus.TokenNoAccess, null, expires, $"{(int)response.StatusCode}");
-                case 404:
-                    return new UpdateCheckResult(UpdateCheckStatus.TokenMissing, null, expires, "404 Not Found");
+                await using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+                data = await JsonSerializer.DeserializeAsync<VersionResponse>(stream, cancellationToken: ct).ConfigureAwait(false);
+            }
+            catch (JsonException ex)
+            {
+                return new UpdateCheckResult(UpdateCheckStatus.Error, null, ex.Message);
+            }
+            if (data is null || SemVer.TagToVersion(data.LatestVersion ?? "") is not { } latest)
+            {
+                return new UpdateCheckResult(UpdateCheckStatus.Error, null, "invalid response");
+            }
+            if (!SemVer.IsNewer(latest, AppConfig.CurrentVersionText.TrimStart('v')))
+            {
+                return new UpdateCheckResult(UpdateCheckStatus.Ok, null, null);
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                return new UpdateCheckResult(UpdateCheckStatus.Error, null, expires, $"HTTP {(int)response.StatusCode}");
-            }
-
-            await using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-            var release = await JsonSerializer.DeserializeAsync<GitHubRelease>(stream, cancellationToken: ct).ConfigureAwait(false);
-
-            UpdateInfo? update = null;
-            if (release is { Draft: false, Prerelease: false }
-                && SemVer.TagToVersion(release.TagName) is { } latest
-                && SemVer.IsNewer(latest, AppConfig.CurrentVersionText.TrimStart('v')))
-            {
-                var asset = release.Assets.FirstOrDefault(a => a.Name.StartsWith("KuroMon-Setup-", StringComparison.OrdinalIgnoreCase)
-                                                               && a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
-                if (asset is not null)
-                {
-                    // Private repositories need the API asset URL with an octet-stream Accept header.
-                    var url = hasToken ? asset.Url : asset.BrowserDownloadUrl;
-                    var sha = asset.Digest is { } d && d.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase) ? d[7..] : null;
-                    update = new UpdateInfo(latest, release.TagName, release.Body ?? string.Empty, url, asset.Name, asset.Size, sha);
-                }
-            }
-            return new UpdateCheckResult(UpdateCheckStatus.Ok, update, expires, null);
+            var fileUrl = IsHttps(data.FileUrl) ? data.FileUrl! : string.Empty;
+            var sha = data.Sha256 is { Length: 64 } s && s.All(Uri.IsHexDigit) ? s.ToLowerInvariant() : null;
+            var page = IsWeb(data.DownloadUrl) ? data.DownloadUrl! : DefaultPageUrl;
+            var update = new UpdateInfo(latest, "v" + latest, data.ReleaseNotes ?? string.Empty, fileUrl, $"KuroMon-Setup-{latest}.exe", sha, page);
+            return new UpdateCheckResult(UpdateCheckStatus.Ok, update, null);
         }
     }
 
-    /// <summary>
-    /// GitHub adds "GitHub-Authentication-Token-Expiration" (e.g. "2026-12-25 00:00:00 UTC") for expiring tokens.
-    /// </summary>
-    private static DateTimeOffset? ReadTokenExpiry(HttpResponseMessage response)
-    {
-        if (!response.Headers.TryGetValues("GitHub-Authentication-Token-Expiration", out var values)) return null;
-        var raw = values.FirstOrDefault()?.Trim();
-        if (string.IsNullOrEmpty(raw)) return null;
+    private static bool IsWeb(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) && (u.Scheme == Uri.UriSchemeHttps || u.Scheme == Uri.UriSchemeHttp);
 
-        raw = raw.Replace(" UTC", " +00:00", StringComparison.OrdinalIgnoreCase);
-        return DateTimeOffset.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture,
-            System.Globalization.DateTimeStyles.AssumeUniversal, out var parsed) ? parsed : null;
+    /// <summary>Installers are downloaded over https only (http just for a local test server in Debug builds).</summary>
+    private static bool IsHttps(string? url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var u)) return false;
+        if (u.Scheme == Uri.UriSchemeHttps) return true;
+#if DEBUG
+        if (u.Scheme == Uri.UriSchemeHttp && u.IsLoopback) return true;
+#endif
+        return false;
     }
 
-    private static bool IsRateLimited(HttpResponseMessage response) =>
-        response.Headers.TryGetValues("X-RateLimit-Remaining", out var v) && v.FirstOrDefault() == "0";
-
-    /// <summary>Downloads the installer into %TEMP%, checks its size and SHA-256, and returns its path.</summary>
+    /// <summary>Downloads the installer into %TEMP% and checks its SHA-256 (required). Returns its path.</summary>
     public async Task<string> DownloadAsync(UpdateInfo info, IProgress<double>? progress, CancellationToken ct = default)
     {
+        if (!info.CanInstall) throw new InvalidOperationException("ダウンロード先か確認用の値がありません。");
         var dir = Path.Combine(Path.GetTempPath(), "KuroMon_update");
         Directory.CreateDirectory(dir);
         var target = Path.Combine(dir, info.AssetName);
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, info.DownloadUrl);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
-
-        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-
-        long total = response.Content.Headers.ContentLength ?? info.Size;
-        await using (var src = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
-        await using (var dst = File.Create(target))
+        try
         {
-            var buffer = new byte[81920];
-            long done = 0;
-            int read;
-            while ((read = await src.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
-            {
-                await dst.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
-                done += read;
-                if (total > 0) progress?.Report(done * 100d / total);
-            }
-        }
+            using var request = new HttpRequestMessage(HttpMethod.Get, info.DownloadUrl);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
+            using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
 
-        var length = new FileInfo(target).Length;
-        if (length == 0 || (info.Size > 0 && length != info.Size)) throw new IOException("ダウンロードしたファイルのサイズが一致しません。");
-        if (info.Sha256 is { } expected)
-        {
-            await using var fs = File.OpenRead(target);
-            var actual = Convert.ToHexString(await SHA256.HashDataAsync(fs, ct).ConfigureAwait(false));
-            if (!actual.Equals(expected, StringComparison.OrdinalIgnoreCase))
+            long total = response.Content.Headers.ContentLength ?? 0;
+            await using (var src = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
+            await using (var dst = File.Create(target))
             {
-                throw new IOException("ダウンロードしたファイルが壊れているか、改ざんされています。");
+                var buffer = new byte[81920];
+                long done = 0;
+                int read;
+                while ((read = await src.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
+                {
+                    done += read;
+                    if (done > MaxInstallerBytes) throw new IOException("ダウンロードしたファイルが大きすぎます。");
+                    await dst.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
+                    if (total > 0) progress?.Report(done * 100d / total);
+                }
             }
+
+            await using (var fs = File.OpenRead(target))
+            {
+                var actual = Convert.ToHexString(await SHA256.HashDataAsync(fs, ct).ConfigureAwait(false));
+                if (!actual.Equals(info.Sha256, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new IOException("ダウンロードしたファイルが壊れているか、改ざんされています。");
+                }
+            }
+            return target;
         }
-        return target;
+        catch
+        {
+            try { File.Delete(target); } catch { }
+            throw;
+        }
     }
 
     /// <summary>Starts the installer silently. The caller exits KuroMon right after; the installer restarts it.</summary>
@@ -192,23 +183,21 @@ public sealed class UpdateService : IDisposable
         });
     }
 
-    public void Dispose() => _http.Dispose();
-
-    private sealed class GitHubRelease
+    /// <summary>Opens the download page (http / https only) in the default browser.</summary>
+    public static void OpenPage(string url)
     {
-        [JsonPropertyName("tag_name")] public string TagName { get; set; } = string.Empty;
-        [JsonPropertyName("body")] public string? Body { get; set; }
-        [JsonPropertyName("draft")] public bool Draft { get; set; }
-        [JsonPropertyName("prerelease")] public bool Prerelease { get; set; }
-        [JsonPropertyName("assets")] public List<GitHubAsset> Assets { get; set; } = [];
+        if (!IsWeb(url)) return;
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     }
 
-    private sealed class GitHubAsset
+    public void Dispose() => _http.Dispose();
+
+    private sealed class VersionResponse
     {
-        [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
-        [JsonPropertyName("url")] public string Url { get; set; } = string.Empty;
-        [JsonPropertyName("browser_download_url")] public string BrowserDownloadUrl { get; set; } = string.Empty;
-        [JsonPropertyName("size")] public long Size { get; set; }
-        [JsonPropertyName("digest")] public string? Digest { get; set; }
+        [JsonPropertyName("latest_version")] public string? LatestVersion { get; set; }
+        [JsonPropertyName("file_url")] public string? FileUrl { get; set; }
+        [JsonPropertyName("sha256")] public string? Sha256 { get; set; }
+        [JsonPropertyName("download_url")] public string? DownloadUrl { get; set; }
+        [JsonPropertyName("release_notes")] public string? ReleaseNotes { get; set; }
     }
 }

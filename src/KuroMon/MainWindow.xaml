@@ -545,8 +545,6 @@
                       <RowDefinition Height="Auto" />
                       <RowDefinition Height="Auto" />
                       <RowDefinition Height="Auto" />
-                      <RowDefinition Height="Auto" />
-                      <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Grid.Resources>
                       <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Body}">
@@ -555,12 +553,10 @@
                     </Grid.Resources>
                     <TextBlock Text="現在のバージョン" Foreground="{DynamicResource Brush.TextSecondary}" />
                     <TextBlock Grid.Column="1" Text="{Binding VersionText}" />
-                    <TextBlock Grid.Row="1" Text="確認先リポジトリ" Foreground="{DynamicResource Brush.TextSecondary}" />
-                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding UpdateRepositoryText}" />
-                    <TextBlock Grid.Row="2" Text="認証" Foreground="{DynamicResource Brush.TextSecondary}" />
-                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding UpdateAuthText}" />
-                    <TextBlock Grid.Row="3" Text="状態" Foreground="{DynamicResource Brush.TextSecondary}" />
-                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding UpdateStatusText}">
+                    <TextBlock Grid.Row="1" Text="確認先" Foreground="{DynamicResource Brush.TextSecondary}" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding UpdateServerText}" />
+                    <TextBlock Grid.Row="2" Text="状態" Foreground="{DynamicResource Brush.TextSecondary}" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding UpdateStatusText}">
                       <TextBlock.Style>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Body}">
                           <Setter Property="Margin" Value="0,4" />
@@ -574,13 +570,11 @@
                         </Style>
                       </TextBlock.Style>
                     </TextBlock>
-                    <TextBlock Grid.Row="4" Text="トークン有効期限" Foreground="{DynamicResource Brush.TextSecondary}" />
-                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding TokenExpiryText}" />
-                    <TextBlock Grid.Row="5" Text="最終確認" Foreground="{DynamicResource Brush.TextSecondary}" />
-                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding LastUpdateCheckText}" />
+                    <TextBlock Grid.Row="3" Text="最終確認" Foreground="{DynamicResource Brush.TextSecondary}" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding LastUpdateCheckText}" />
                   </Grid>
                   <TextBlock Margin="0,8,0,0" Style="{StaticResource Text.Caption}"
-                             Text="起動時と 6 時間ごとに確認します (問題がある間は 15 分ごと)。確認先は既定で公開リポジトリです。変更する場合は exe と同じフォルダの .env または環境変数で設定します。" />
+                             Text="起動時と 6 時間ごとに確認します (確認できなかったときは 30 分ごと)。確認のときに送信する情報はありません。" />
                   <Button Margin="0,12,0,0" HorizontalAlignment="Left" Command="{Binding CheckUpdateCommand}">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="&#xE895;" Style="{StaticResource Icon}" FontSize="14" />

@@ -26,19 +26,13 @@ public partial class App : Application
     private OverlayWindow? _overlay;
     private TrayIconService? _tray;
     private DispatcherTimer? _updateTimer;
-    private DispatcherTimer? _envDebounce;
-    private FileSystemWatcher? _envWatcher;
     private bool _exiting;
     private bool _updateDialogOpen;
     private bool _checkingUpdate;
 
-    // Update check scheduling / token health.
+    // Update check scheduling (Musubi server).
     private static readonly TimeSpan RegularCheckInterval = TimeSpan.FromHours(6);
-    private static readonly TimeSpan AuthRetryInterval = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan ErrorRetryInterval = TimeSpan.FromMinutes(30);
-    private static readonly TimeSpan TokenExpiryWarning = TimeSpan.FromDays(7);
-    private UpdateCheckStatus? _lastUpdateStatus;
-    private DateTime _lastExpiryWarning = DateTime.MinValue;
 
     // High temperature alert: notify after 10 consecutive samples (= 10 s) at or above the threshold.
     private const float AlertThreshold = 85f;
@@ -105,105 +99,27 @@ public partial class App : Application
         _ = Task.Run(SyncAutoStart);
 
         await _vm.InitializeAsync();
-        // The app stays resident: re-check every 6 hours, retry sooner while the token is broken,
-        // and re-check right after .env is edited so a renewed token resumes checks without a restart.
+        // The app stays resident: re-check every 6 hours (sooner after a failed check).
         _updateTimer = new DispatcherTimer { Interval = RegularCheckInterval };
         _updateTimer.Tick += async (_, _) => await CheckForUpdateAsync(silent: true, automatic: true);
-        StartDotEnvWatcher();
 
         await CheckForUpdateAsync(silent: true, automatic: true);
         _updateTimer.Start();
     }
 
-    private void StartDotEnvWatcher()
-    {
-        _envDebounce = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        _envDebounce.Tick += async (_, _) =>
-        {
-            _envDebounce.Stop();
-            AppLog.Info(".env changed; re-checking updates.");
-            await CheckForUpdateAsync(silent: true, automatic: true);
-        };
-
-        try
-        {
-            _envWatcher = new FileSystemWatcher(AppConfig.ExeDirectory, AppConfig.DotEnvFileName)
-            {
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size | NotifyFilters.CreationTime,
-            };
-            // Editors raise several events per save; restart the debounce timer on each one.
-            void OnChanged(object? s, FileSystemEventArgs a) => Dispatcher.BeginInvoke(() =>
-            {
-                _envDebounce.Stop();
-                _envDebounce.Start();
-            });
-            _envWatcher.Changed += OnChanged;
-            _envWatcher.Created += OnChanged;
-            _envWatcher.Renamed += OnChanged;
-            _envWatcher.EnableRaisingEvents = true;
-        }
-        catch (Exception ex)
-        {
-            AppLog.Error("Could not watch .env for changes.", ex);
-        }
-    }
-
     /// <summary>Updates status, notifications and retry timing from a check result.</summary>
     private void HandleCheckStatus(UpdateCheckResult r, bool silent)
     {
-        var previous = _lastUpdateStatus;
-        _lastUpdateStatus = r.Status;
         _vm?.SetUpdateStatus(r);
-
         if (_updateTimer is not null)
         {
-            var interval = r.IsAuthProblem ? AuthRetryInterval
-                : r.Status == UpdateCheckStatus.Error ? ErrorRetryInterval
-                : RegularCheckInterval;
+            var interval = r.Status == UpdateCheckStatus.Error ? ErrorRetryInterval : RegularCheckInterval;
             if (_updateTimer.Interval != interval) _updateTimer.Interval = interval;
         }
-
-        bool wasAuthProblem = previous is UpdateCheckStatus.TokenInvalid or UpdateCheckStatus.TokenNoAccess or UpdateCheckStatus.TokenMissing;
-
-        if (r.IsAuthProblem)
-        {
-            AppLog.Warn($"Update check auth problem: {r.Status} ({r.Message})");
-            var message = r.Status switch
-            {
-                UpdateCheckStatus.TokenInvalid => "アップデート確認用のトークンが無効か期限切れです。",
-                UpdateCheckStatus.TokenNoAccess => "アップデート確認用のトークンにリポジトリの読み取り権限がありません。",
-                _ => "アップデート確認先のリポジトリにアクセスできません (トークン未設定)。",
-            } + $" .env の {AppConfig.GitHubTokenKey} を更新すると自動で再開します。";
-
-            if (!wasAuthProblem || previous != r.Status) _tray?.ShowBalloon("KuroMon - アップデート確認", message);
-            if (!silent) _vm?.Snackbar.Enqueue(message);
-        }
-        else if (r.Status == UpdateCheckStatus.Ok && wasAuthProblem)
-        {
-            AppLog.Info("Update check recovered: token is valid again.");
-            _tray?.ShowBalloon("KuroMon - アップデート確認", "トークンが確認できたため、アップデート確認を再開しました。");
-        }
-        else if (r.Status == UpdateCheckStatus.Error)
+        if (r.Status == UpdateCheckStatus.Error)
         {
             AppLog.Warn("Update check failed: " + r.Message);
-            if (!silent) _vm?.Snackbar.Enqueue("アップデートの確認に失敗しました: " + r.Message);
-        }
-        else if (r.Status == UpdateCheckStatus.NotConfigured && !silent)
-        {
-            _vm?.Snackbar.Enqueue($"更新確認先が未設定です ({AppConfig.UpdateRepoKey} を .env に設定してください)");
-        }
-
-        // Warn once a day during the last 7 days before the token expires.
-        if (r.TokenExpires is { } expires)
-        {
-            var left = expires - DateTimeOffset.Now;
-            if (left > TimeSpan.Zero && left <= TokenExpiryWarning && DateTime.Now - _lastExpiryWarning >= TimeSpan.FromHours(24))
-            {
-                _lastExpiryWarning = DateTime.Now;
-                AppLog.Warn($"GitHub token expires at {expires:yyyy-MM-dd HH:mm zzz}.");
-                _tray?.ShowBalloon("KuroMon - トークンの期限",
-                    $"アップデート確認用のトークンが {expires.LocalDateTime:yyyy/MM/dd HH:mm} に期限切れになります。新しいトークンを .env に設定してください。");
-            }
+            if (!silent) _vm?.Snackbar.Enqueue("アップデートを確認できませんでした: " + r.Message);
         }
     }
 
@@ -294,8 +210,6 @@ public partial class App : Application
         AppLog.Info("Exit requested.");
 
         _updateTimer?.Stop();
-        _envDebounce?.Stop();
-        _envWatcher?.Dispose();
         _tray?.Dispose();
         _tray = null;
         AppSettings.Changed -= SyncOverlay;
@@ -322,7 +236,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            result = new UpdateCheckResult(UpdateCheckStatus.Error, null, null, ex.Message);
+            result = new UpdateCheckResult(UpdateCheckStatus.Error, null, ex.Message);
         }
         finally
         {

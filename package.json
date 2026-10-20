@@ -1,0 +1,13 @@
+{
+  "name": "kuromon",
+  "private": true,
+  "description": "Version is defined in src/KuroMon/KuroMon.csproj. This file only provides \"npm run deploy\".",
+  "musubi": {
+    "appId": "kuromon",
+    "appName": "KuroMon"
+  },
+  "scripts": {
+    "deploy": "musubi-deploy",
+    "deploy:dry": "musubi-deploy --dry-run"
+  }
+}
